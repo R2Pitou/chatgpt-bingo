@@ -1,5 +1,7 @@
 // Append to this list to propose new default bingo tiles via PR.
 // Keep one entry per line inside the template string.
+// Preserve intentional quirks exactly as written.
+// In particular: `Mispells a word` is intentionally misspelled. Do not "fix" it.
 window.DEFAULT_CARD_POOL = `"and honestly"
 "As an AI model"
 "chaos gremlin"

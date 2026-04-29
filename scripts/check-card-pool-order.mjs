@@ -14,6 +14,8 @@ const lines = match[1]
     .map((line) => line.trim())
     .filter(Boolean);
 
+// This script only checks alphabetical order.
+// It must not normalize, rewrite, or "correct" intentionally weird entries.
 function sortKey(line) {
     const unwrapped = line.replace(/^(['"])(.*)\1$/, "$2");
     return unwrapped.toLocaleLowerCase();
