@@ -5,7 +5,7 @@ window.DEFAULT_CARD_POOL = `"chaos gremlin"
 "emotionally wet"
 "Victorian orphan"
 "raccoon"
-Misspells a word
+Mispells a word
 'You can see the code in our conversation history'
 Not only x but also y
 "and honestly"
