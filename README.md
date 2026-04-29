@@ -47,4 +47,4 @@ Human review is required before defaults are accepted.
 
 ## GitHub Pages
 
-This repo publishes with GitHub Pages from the `main` branch.
+This repo publishes with GitHub Pages from the `main` branch,  and available at: https://r2pitou.github.io/chatgpt-bingo/
