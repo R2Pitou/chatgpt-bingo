@@ -1,4 +1,4 @@
-// Edit this list to propose new default bingo tiles via PR.
+// Append to this list to propose new default bingo tiles via PR.
 // Keep one entry per line inside the template string.
 window.DEFAULT_CARD_POOL = `"chaos gremlin"
 "Goblin"
