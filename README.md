@@ -1,40 +1,48 @@
 # ChatGPT Bingo
 
-A tiny static bingo card generator for ChatGPT habits, quirks, and recurring crimes against clarity.
+A small static bingo card generator for recurring ChatGPT habits, tics, evasions, and accidental self-parody.
 
-## What Ships
+The site is intentionally simple:
 
-- `index.html`: the app
-- `card-pool.js`: the default suggestion pool people can improve via pull request
+- `index.html` is the app
+- `card-pool.js` is the default pool of bingo tiles
 
-## Local Use
+Open `index.html` in a browser and it works.
 
-Open `index.html` in a browser.
+## Contributing
 
-## Meaningful Contributions
+Pull requests are welcome, but this is not an open invitation to endlessly "improve" the joke.
 
-Contribute in ways that improve the default card pool, not just increase its size.
+The default pool should stay recognizable, readable, and curated. Please treat it like an edited list, not a dumping ground.
 
-- Add phrases that are broadly recognizable to ChatGPT users, not one-off private jokes.
-- Prefer short entries that fit on a bingo tile without becoming unreadable.
-- Keep the tone sharp, but avoid duplicates unless repetition is intentional for weighting.
-- Use quote marks intentionally:
+## What Makes A Good Submission
+
+- Add phrases that a lot of ChatGPT users will recognize immediately.
+- Keep entries short enough to work on a bingo tile.
+- Match the tone of the existing board.
+- Use formatting intentionally:
   - `"double quotes"` render as italic quote-style entries
   - `'single quotes'` render as code-style entries
   - plain text renders as bold default entries
-- If you add a duplicate on purpose, mention that in the PR so it is not "cleaned up" by mistake.
-- Avoid entries that depend on current events, private conversations, or obscure repo-specific context.
 
-## How To Contribute Defaults
+## What Not To Do
+
+- Do not edit already approved work just because you would phrase it differently.
+- Do not intentionally submit duplicates.
+- Do not "fix" quirks that are there on purpose.
+- Do not add ultra-specific in-jokes, current-event references, or private-conversation context.
+
+Example: `Mispells a word` is intentionally misspelled and should stay that way.
+
+## How To Submit A Default
 
 1. Edit `card-pool.js`.
 2. Keep one entry per line inside the template string.
 3. Preview the board locally in a browser.
-4. Open a pull request explaining:
-   - what you added
-   - why it is broadly recognizable
-   - whether any duplicates are intentional
+4. Open a pull request explaining what you added and why it belongs.
+
+Human review is required before defaults are accepted.
 
 ## GitHub Pages
 
-This repo is intended to publish directly with GitHub Pages from the `main` branch.
+This repo publishes with GitHub Pages from the `main` branch.
