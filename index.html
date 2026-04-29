@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChatGPT Bingo</title>
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --card-dark: #1e293b;
+            --cell-bg: #334155;
+            --cell-hover: #475569;
+            --text-main: #f8fafc;
+            --accent-neon: #22d3ee;
+            --accent-pink-soft: #f0a3bc;
+            --accent-pink-bright: #ff6989;
+            --accent-gold: #fde047;
+            --accent-ink: #020617;
+            --squircle-1: 18px 24px 20px 16px;
+            --squircle-2: 24px 14px 22px 16px / 16px 22px 14px 24px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Inter", system-ui, -apple-system, sans-serif;
+            background:
+                radial-gradient(circle at top, rgba(34, 211, 238, 0.18), transparent 30%),
+                radial-gradient(circle at bottom right, rgba(255, 105, 137, 0.18), transparent 26%),
+                var(--bg-dark);
+            color: var(--text-main);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 40px;
+            overflow-x: hidden;
+        }
+
+        .page-stack {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #sidebar {
+            position: fixed;
+            top: 0;
+            left: -380px;
+            width: 340px;
+            height: 100vh;
+            background: #0b1120;
+            border-right: 2px solid #334155;
+            padding: 30px 20px;
+            transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 100;
+            box-shadow: 20px 0 50px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        #sidebar.open {
+            left: 0;
+        }
+
+        #toggleSidebar {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: var(--accent-neon);
+            color: #000;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 12px;
+            font-weight: 800;
+            cursor: pointer;
+            z-index: 101;
+            transition: transform 0.2s, left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 15px rgba(34, 211, 238, 0.3);
+        }
+
+        #toggleSidebar:hover {
+            transform: scale(1.05);
+        }
+
+        #sidebar.open ~ #toggleSidebar {
+            left: 360px;
+            background: #334155;
+            color: #fff;
+        }
+
+        #sidebar h2 {
+            margin: 0;
+            font-size: 1.5rem;
+            color: var(--accent-neon);
+        }
+
+        #sidebar p {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            margin: 0;
+            line-height: 1.4;
+        }
+
+        #sidebar code {
+            background: #1e293b;
+            padding: 2px 5px;
+            border-radius: 4px;
+        }
+
+        .field-label {
+            font-size: 0.75rem;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #cbd5e1;
+        }
+
+        .text-input,
+        textarea {
+            width: 100%;
+            background: #1e293b;
+            color: #e2e8f0;
+            border: 2px solid #334155;
+            border-radius: 12px;
+            padding: 12px 15px;
+            font-size: 0.9rem;
+            outline: none;
+        }
+
+        .text-input {
+            font-family: inherit;
+        }
+
+        textarea {
+            flex-grow: 1;
+            min-height: 260px;
+            font-family: monospace;
+            font-size: 0.85rem;
+            resize: none;
+            white-space: pre;
+        }
+
+        .text-input:focus,
+        textarea:focus {
+            border-color: var(--accent-neon);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .editor-note {
+            font-size: 0.76rem;
+            line-height: 1.45;
+            color: #94a3b8;
+        }
+
+        .editor-note a {
+            color: #cbd5e1;
+            text-decoration-color: rgba(203, 213, 225, 0.35);
+            text-underline-offset: 0.18em;
+        }
+
+        .editor-note a:hover {
+            color: #f8fafc;
+            text-decoration-color: currentColor;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .generate-btn {
+            background: var(--accent-neon);
+            color: #000;
+        }
+
+        .print-btn {
+            background: #475569;
+            color: #fff;
+        }
+
+        .action-btn:hover {
+            opacity: 0.85;
+        }
+
+        .bingo-card {
+            background: var(--card-dark);
+            width: 100%;
+            max-width: 700px;
+            padding: 50px 40px 40px;
+            border-radius: 40px;
+            position: relative;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+            border: 1px solid #334155;
+            transition: all 0.3s;
+        }
+
+        .card-header {
+            margin: 0 0 24px;
+            padding-right: 134px;
+            min-height: 96px;
+        }
+
+        .sticker-wrapper {
+            position: absolute;
+            top: 18px;
+            right: 20px;
+            width: 112px;
+            height: 112px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transform: rotate(14deg);
+            filter: drop-shadow(0 12px 24px rgba(15, 23, 42, 0.32));
+            z-index: 20;
+        }
+
+        .sticker-svg {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+
+        #subtitleText {
+            position: relative;
+            z-index: 21;
+            font-family: "Trebuchet MS", "Avenir Next", sans-serif;
+            font-weight: 800;
+            color: #5b4300;
+            text-align: center;
+            font-size: 0.76rem;
+            max-width: 70px;
+            line-height: 1.15;
+            letter-spacing: 0.04em;
+            white-space: pre-line;
+            overflow-wrap: anywhere;
+        }
+
+        #titleText {
+            text-align: center;
+            margin: 0;
+            font-size: 3rem;
+            font-weight: 900;
+            letter-spacing: 2px;
+            color: #fff;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+            overflow-wrap: anywhere;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(var(--grid-size, 5), 1fr);
+            gap: 12px;
+            min-width: 0;
+        }
+
+        .sound-credit {
+            margin: 10px 0 0;
+            text-align: center;
+            font-size: 0.64rem;
+            line-height: 1.4;
+            color: rgba(148, 163, 184, 0.58);
+        }
+
+        .sound-credit a {
+            color: inherit;
+            text-decoration-color: rgba(148, 163, 184, 0.22);
+            text-underline-offset: 0.18em;
+        }
+
+        .sound-credit a:hover {
+            color: rgba(226, 232, 240, 0.82);
+            text-decoration-color: currentColor;
+        }
+
+        .cell {
+            aspect-ratio: 1 / 1;
+            background: var(--cell-bg);
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 8px;
+            font-size: 0.72rem;
+            font: inherit;
+            color: inherit;
+            cursor: pointer;
+            position: relative;
+            border-radius: 20px;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            user-select: none;
+            overflow: hidden;
+        }
+
+        .cell:nth-child(even) {
+            border-radius: var(--squircle-2);
+        }
+
+        .cell:nth-child(3n) {
+            border-radius: var(--squircle-1);
+        }
+
+        .cell:hover {
+            transform: translateY(-3px) scale(1.02);
+            background: var(--cell-hover);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .style-base {
+            display: block;
+            font-weight: 800;
+            color: #f8fafc;
+            line-height: 1.08;
+        }
+
+        .style-quote {
+            display: block;
+            font-style: italic;
+            font-weight: 400;
+            color: #cbd5e1;
+            line-height: 1.14;
+        }
+
+        .style-code {
+            display: block;
+            font-family: "Courier New", monospace;
+            background: #0f172a;
+            color: #a78bfa;
+            padding: 3px 4px;
+            border-radius: 6px;
+            font-weight: 700;
+            border: 1px solid #4c1d95;
+            word-break: break-all;
+            line-height: 1.02;
+        }
+
+        .cell > span {
+            width: 100%;
+            max-width: 100%;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+        }
+
+        .free-note {
+            display: block;
+            margin-top: 4px;
+            font-size: 0.7em;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            opacity: 0.72;
+        }
+
+        .cell.marked::after {
+            content: "";
+            position: absolute;
+            inset: 7.5%;
+            background: rgba(240, 163, 188, 0.18);
+            border: 4px solid var(--accent-pink-bright);
+            border-radius: 30px 15px 25px 20px;
+            box-shadow:
+                0 0 18px rgba(255, 105, 137, 0.4),
+                inset 0 0 12px rgba(240, 163, 188, 0.4);
+            pointer-events: none;
+            transform: rotate(-5deg);
+        }
+
+        .free-space {
+            background: var(--accent-neon) !important;
+            color: #000 !important;
+            box-shadow: 0 0 20px rgba(34, 211, 238, 0.3);
+        }
+
+        .free-space .style-base {
+            color: #000;
+        }
+
+        #confettiLayer {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: 200;
+        }
+
+        .confetti-piece {
+            position: absolute;
+            top: -10vh;
+            width: 12px;
+            height: 20px;
+            border-radius: 4px;
+            opacity: 0.95;
+            animation: confetti-fall 2300ms linear forwards;
+        }
+
+        @keyframes confetti-fall {
+            0% {
+                transform: translate3d(0, 0, 0) rotate(0deg);
+            }
+
+            100% {
+                transform: translate3d(var(--drift, 0px), 120vh, 0) rotate(var(--spin, 540deg));
+            }
+        }
+
+        @media (max-width: 760px) {
+            body {
+                padding: 88px 16px 24px;
+                align-items: flex-start;
+            }
+
+            #sidebar {
+                width: min(340px, 92vw);
+                left: -100vw;
+            }
+
+            #sidebar.open ~ #toggleSidebar {
+                left: calc(min(340px, 92vw) + 12px);
+            }
+
+            .bingo-card {
+                padding: 42px 18px 20px;
+                border-radius: 28px;
+            }
+
+            .card-header {
+                margin-bottom: 18px;
+                padding-right: 102px;
+                min-height: 78px;
+            }
+
+            #titleText {
+                font-size: 2.2rem;
+            }
+
+            .sticker-wrapper {
+                width: 88px;
+                height: 88px;
+                top: 16px;
+                right: 14px;
+            }
+
+            .grid {
+                gap: 8px;
+            }
+
+            .sound-credit {
+                margin-top: 8px;
+                font-size: 0.6rem;
+            }
+
+            .cell {
+                font-size: 0.72rem;
+                padding: 8px;
+            }
+        }
+
+        @media print {
+            body {
+                background: #fff;
+                padding: 0;
+            }
+
+            #sidebar,
+            #toggleSidebar,
+            #confettiLayer {
+                display: none !important;
+            }
+
+            .bingo-card {
+                border: 2px solid #000;
+                box-shadow: none;
+                max-width: 100%;
+                border-radius: 0;
+                padding: 20px;
+            }
+
+            .cell {
+                background: #fff !important;
+                border: 2px solid #000 !important;
+                color: #000;
+            }
+
+            .style-base {
+                color: #000;
+            }
+
+            .style-quote {
+                color: #333;
+            }
+
+            .style-code {
+                background: #f0f0f0;
+                border-color: #000;
+                color: #000;
+            }
+
+            #titleText {
+                color: #000;
+                text-shadow: none;
+            }
+
+            .free-space {
+                background: #f0f0f0 !important;
+            }
+
+            .cell.marked::after {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="sidebar">
+        <h2>Card Editor</h2>
+        <p>
+            Edit the card title, sticker subtitle, and the item pool here.<br>
+            Standard = <b>Bold</b><br>
+            <code>"Quotes"</code> = <i>Italicized</i><br>
+            <code>'Single'</code> = code style
+        </p>
+
+        <label class="field-label" for="titleInput">Title</label>
+        <input id="titleInput" class="text-input" type="text" value="ChatGPT BINGO">
+
+        <label class="field-label" for="subtitleInput">Subtitle</label>
+        <input id="subtitleInput" class="text-input" type="text" value="For the month of May">
+
+        <label class="field-label" for="poolInput">Card Pool</label>
+        <textarea id="poolInput" placeholder="Loading suggestions from card-pool.js..."></textarea>
+        <p class="editor-note">
+            contribute defaults in Github:
+            <a href="https://github.com/R2Pitou/chatgpt-bingo" target="_blank" rel="noopener noreferrer">card-pool.js</a>
+        </p>
+
+        <div class="btn-group">
+            <button class="action-btn generate-btn" type="button" onclick="generateBoard()">Generate</button>
+            <button class="action-btn print-btn" type="button" onclick="window.print()">Print</button>
+        </div>
+    </div>
+
+    <button id="toggleSidebar" type="button" onclick="toggleSidebar()">Editor</button>
+
+    <div class="page-stack">
+        <div class="bingo-card">
+            <div class="sticker-wrapper">
+                <svg class="sticker-svg" viewBox="0 0 120 120" aria-hidden="true">
+                    <defs>
+                        <radialGradient id="badgeFill" cx="50%" cy="35%" r="70%">
+                            <stop offset="0%" stop-color="#fff6bf"></stop>
+                            <stop offset="58%" stop-color="#f6d860"></stop>
+                            <stop offset="100%" stop-color="#d4a721"></stop>
+                        </radialGradient>
+                    </defs>
+                    <path
+                        d="M60 7
+                        C66 7 69 16 74 18
+                        C80 20 88 15 92 19
+                        C97 23 94 31 97 36
+                        C100 41 109 43 110 49
+                        C111 55 104 61 104 66
+                        C104 72 111 78 110 84
+                        C109 90 100 92 97 97
+                        C94 102 97 110 92 114
+                        C88 118 80 113 74 115
+                        C69 117 66 126 60 126
+                        C54 126 51 117 46 115
+                        C40 113 32 118 28 114
+                        C23 110 26 102 23 97
+                        C20 92 11 90 10 84
+                        C9 78 16 72 16 66
+                        C16 61 9 55 10 49
+                        C11 43 20 41 23 36
+                        C26 31 23 23 28 19
+                        C32 15 40 20 46 18
+                        C51 16 54 7 60 7Z"
+                        transform="translate(0 -6)"
+                        fill="url(#badgeFill)"
+                        stroke="#ffe899"
+                        stroke-width="2.5"
+                        stroke-linejoin="round"
+                    ></path>
+                    <circle cx="60" cy="60" r="38" fill="none" stroke="rgba(91,67,0,0.32)" stroke-width="2.5"></circle>
+                    <circle cx="60" cy="60" r="31" fill="rgba(255,248,212,0.3)" stroke="#fff7d2" stroke-width="1.5"></circle>
+                </svg>
+                <div id="subtitleText">For the month of May</div>
+            </div>
+
+            <div class="card-header">
+                <h1 id="titleText">ChatGPT BINGO</h1>
+            </div>
+            <div class="grid" id="grid"></div>
+        </div>
+        <p class="sound-credit">
+            <a href="https://freesound.org/people/ATP2-kh/sounds/844242/" target="_blank" rel="noopener noreferrer">Clarinet Monkeying around with the head and the reed by ATP2 from freesound.org</a>
+        </p>
+    </div>
+
+    <div id="confettiLayer" aria-hidden="true"></div>
+    <audio id="winSound" preload="auto" src="https://cdn.freesound.org/previews/844/844242_18042200-hq.mp3"></audio>
+    <script src="card-pool.js"></script>
+
+    <script>
+        const state = {
+            gridSize: 0,
+            milestoneStage: 0
+        };
+
+        const CONFETTI_COLORS = ["#22d3ee", "#f43f5e", "#fde047", "#fb7185", "#a78bfa", "#f8fafc"];
+        const FALLBACK_CARD_POOL = `"chaos gremlin"
+"Goblin"
+"emotionally wet"
+"Victorian orphan"
+"raccoon"
+Misspells a word
+'You can see the code in our conversation history'
+Not only x but also y
+"and honestly"
+"My blunt take"
+"As an AI model"
+"cryptid"
+Triplets
+"Suspicious sandwich"
+Unsolicited rewriting of pasted context
+Someone / something in your writing is doing a lot of labor.
+Fails to close a code block
+Starts generating image, stops and replies in text
+Quoting itself and congratulating you on the cleverness of it
+Shoehorning everything in the conversation history to align with your statement
+Vibing a reply and ignoring uploaded context
+"Yes, that's a sharper diagnosis / observation / thought"
+"That is painfully accurate."
+"You're not wrong"
+No reply
+'You can see the code in our conversation history'`;
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById("sidebar");
+            const button = document.getElementById("toggleSidebar");
+            const isOpen = sidebar.classList.toggle("open");
+            button.textContent = isOpen ? "Close" : "Editor";
+        }
+
+        function escapeHTML(str) {
+            const div = document.createElement("div");
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        function formatCellText(text) {
+            const trimmed = text.trim();
+            const isQuote = trimmed.startsWith('"') && trimmed.endsWith('"');
+            const isCode = trimmed.startsWith("'") && trimmed.endsWith("'");
+
+            if (isQuote) {
+                return `<span class="style-quote">${escapeHTML(trimmed)}</span>`;
+            }
+
+            if (isCode) {
+                return `<span class="style-code">${escapeHTML(trimmed.slice(1, -1))}</span>`;
+            }
+
+            return `<span class="style-base">${escapeHTML(trimmed)}</span>`;
+        }
+
+        function shuffleArray(items) {
+            const shuffled = [...items];
+
+            for (let i = shuffled.length - 1; i > 0; i -= 1) {
+                const swapIndex = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[i]];
+            }
+
+            return shuffled;
+        }
+
+        function syncCardText() {
+            const title = document.getElementById("titleInput").value.trim() || "ChatGPT BINGO";
+            const subtitle = document.getElementById("subtitleInput").value.trim() || "For the month of May";
+
+            document.getElementById("titleText").textContent = title;
+            document.getElementById("subtitleText").textContent = subtitle;
+        }
+
+        function loadDefaultPool() {
+            const poolInput = document.getElementById("poolInput");
+            const defaultPool =
+                typeof window.DEFAULT_CARD_POOL === "string" && window.DEFAULT_CARD_POOL.trim().length > 0
+                    ? window.DEFAULT_CARD_POOL
+                    : FALLBACK_CARD_POOL;
+
+            if (!poolInput.value.trim()) {
+                poolInput.value = defaultPool.trim();
+            }
+        }
+
+        function clearCelebration() {
+            document.getElementById("confettiLayer").replaceChildren();
+            state.milestoneStage = 0;
+        }
+
+        function throwConfetti() {
+            const layer = document.getElementById("confettiLayer");
+            layer.replaceChildren();
+
+            for (let i = 0; i < 120; i += 1) {
+                const piece = document.createElement("div");
+                piece.className = "confetti-piece";
+                piece.style.left = `${Math.random() * 100}vw`;
+                piece.style.background = CONFETTI_COLORS[i % CONFETTI_COLORS.length];
+                piece.style.animationDuration = `${1800 + Math.random() * 1700}ms`;
+                piece.style.animationDelay = `${Math.random() * 300}ms`;
+                piece.style.setProperty("--drift", `${-180 + Math.random() * 360}px`);
+                piece.style.setProperty("--spin", `${360 + Math.random() * 900}deg`);
+                layer.appendChild(piece);
+            }
+
+            window.setTimeout(() => {
+                layer.replaceChildren();
+            }, 4200);
+        }
+
+        function playWinSound() {
+            const winSound = document.getElementById("winSound");
+            winSound.pause();
+            winSound.currentTime = 0;
+            winSound.volume = 0.4;
+            winSound.play().catch(() => {});
+        }
+
+        function getWinningLines(gridSize) {
+            const lines = [];
+
+            for (let row = 0; row < gridSize; row += 1) {
+                lines.push(Array.from({ length: gridSize }, (_, col) => row * gridSize + col));
+            }
+
+            for (let col = 0; col < gridSize; col += 1) {
+                lines.push(Array.from({ length: gridSize }, (_, row) => row * gridSize + col));
+            }
+
+            lines.push(Array.from({ length: gridSize }, (_, i) => i * (gridSize + 1)));
+            lines.push(Array.from({ length: gridSize }, (_, i) => (i + 1) * (gridSize - 1)));
+
+            return lines;
+        }
+
+        function countCompletedRows() {
+            const cells = Array.from(document.querySelectorAll("#grid .cell"));
+
+            return Array.from({ length: state.gridSize }, (_, row) => row).filter((row) =>
+                Array.from({ length: state.gridSize }, (_, col) => row * state.gridSize + col).every(
+                    (index) => cells[index] && cells[index].classList.contains("marked")
+                )
+            ).length;
+        }
+
+        function countCompletedLines() {
+            const cells = Array.from(document.querySelectorAll("#grid .cell"));
+            return getWinningLines(state.gridSize).filter((line) =>
+                line.every((index) => cells[index] && cells[index].classList.contains("marked"))
+            ).length;
+        }
+
+        function getMilestoneStage() {
+            const completedLineCount = countCompletedLines();
+            const completedRowCount = countCompletedRows();
+
+            if (completedLineCount === 0) {
+                return 0;
+            }
+
+            return Math.max(1, completedRowCount);
+        }
+
+        function fitCellText(cell) {
+            const textNode = cell.querySelector("span");
+            if (!textNode) {
+                return;
+            }
+
+            const maxFontSize = textNode.classList.contains("style-code") ? 14 : 17;
+            const minFontSize = textNode.classList.contains("style-code") ? 8 : 9;
+            const targetWidth = Math.max(0, cell.clientWidth - 14);
+            const targetHeight = Math.max(0, cell.clientHeight - 14);
+
+            textNode.style.fontSize = `${maxFontSize}px`;
+
+            while (
+                parseFloat(textNode.style.fontSize) > minFontSize &&
+                (textNode.scrollWidth > targetWidth || textNode.scrollHeight > targetHeight)
+            ) {
+                textNode.style.fontSize = `${parseFloat(textNode.style.fontSize) - 0.5}px`;
+            }
+        }
+
+        function fitAllCellText() {
+            document.querySelectorAll("#grid .cell").forEach((cell) => {
+                fitCellText(cell);
+            });
+        }
+
+        function checkForBingo() {
+            if (!state.gridSize) {
+                return;
+            }
+
+            const milestoneStage = getMilestoneStage();
+            if (milestoneStage > state.milestoneStage) {
+                playWinSound();
+                throwConfetti();
+            }
+
+            state.milestoneStage = milestoneStage;
+        }
+
+        function generateBoard() {
+            syncCardText();
+            clearCelebration();
+
+            const rawText = document.getElementById("poolInput").value;
+            const pool = rawText
+                .split("\n")
+                .map((line) => line.trim())
+                .filter((line) => line.length > 0);
+            const grid = document.getElementById("grid");
+
+            const itemCount = pool.length;
+            if (itemCount < 8) {
+                alert(`You only provided ${itemCount} items. You need at least 8 to make a 3x3 bingo.`);
+                return;
+            }
+
+            let gridSize = 3;
+            let cellsNeeded = 9;
+            let hasFreeSpace = false;
+            let freeSpaceIndex = -1;
+
+            if (itemCount >= 24) {
+                gridSize = 5;
+                cellsNeeded = 24;
+                hasFreeSpace = true;
+                freeSpaceIndex = 12;
+            } else if (itemCount >= 16) {
+                gridSize = 4;
+                cellsNeeded = 16;
+            } else if (itemCount >= 9) {
+                gridSize = 3;
+                cellsNeeded = 9;
+            } else if (itemCount === 8) {
+                gridSize = 3;
+                cellsNeeded = 8;
+                hasFreeSpace = true;
+                freeSpaceIndex = 4;
+            }
+
+            state.gridSize = gridSize;
+
+            grid.style.setProperty("--grid-size", gridSize);
+            grid.innerHTML = "";
+
+            const selection = shuffleArray(pool).slice(0, cellsNeeded);
+
+            if (hasFreeSpace) {
+                selection.splice(freeSpaceIndex, 0, "FREE_SPACE");
+            }
+
+            selection.forEach((text) => {
+                const cell = document.createElement("button");
+                cell.type = "button";
+                cell.className = "cell";
+                cell.setAttribute("aria-pressed", "false");
+
+                if (text === "FREE_SPACE") {
+                    cell.classList.add("free-space");
+                    cell.innerHTML = '<span class="style-base">You\'re absolutely right<span class="free-note">(free)</span></span>';
+                } else {
+                    cell.innerHTML = formatCellText(text);
+                }
+
+                cell.addEventListener("click", () => {
+                    cell.classList.toggle("marked");
+                    cell.setAttribute("aria-pressed", String(cell.classList.contains("marked")));
+                    checkForBingo();
+                });
+
+                grid.appendChild(cell);
+            });
+
+            fitAllCellText();
+        }
+
+        document.getElementById("titleInput").addEventListener("input", syncCardText);
+        document.getElementById("subtitleInput").addEventListener("input", syncCardText);
+        window.addEventListener("resize", fitAllCellText);
+
+        loadDefaultPool();
+        generateBoard();
+    </script>
+</body>
+</html>
