@@ -20,6 +20,7 @@ The default pool should stay recognizable, readable, and curated. Please treat i
 - Add phrases that a lot of ChatGPT users will recognize immediately.
 - Keep entries short enough to work on a bingo tile.
 - Match the tone of the existing board.
+- Keep the list alphabetized.
 - Use formatting intentionally:
   - `"double quotes"` render as italic quote-style entries
   - `'single quotes'` render as code-style entries
@@ -38,8 +39,9 @@ Example: `Mispells a word` is intentionally misspelled and should stay that way.
 
 1. Edit `card-pool.js`.
 2. Keep one entry per line inside the template string.
-3. Preview the board locally in a browser.
-4. Open a pull request explaining what you added and why it belongs.
+3. Keep the file alphabetized.
+4. Preview the board locally in a browser.
+5. Open a pull request explaining what you added and why it belongs.
 
 Human review is required before defaults are accepted.
 

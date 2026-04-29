@@ -1,0 +1,86 @@
+name: Card Pool Order
+
+on:
+  pull_request_target:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  check-card-pool-order:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout base repository
+        uses: actions/checkout@v4
+
+      - name: Fetch card-pool.js from PR head
+        id: fetch
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const files = await github.paginate(github.rest.pulls.listFiles, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr.number,
+              per_page: 100
+            });
+
+            const changed = files.some((file) => file.filename === "card-pool.js");
+            core.setOutput("changed", changed ? "true" : "false");
+
+            if (!changed) {
+              core.info("card-pool.js was not changed in this PR.");
+              return;
+            }
+
+            const response = await github.rest.repos.getContent({
+              owner: pr.head.repo.owner.login,
+              repo: pr.head.repo.name,
+              path: "card-pool.js",
+              ref: pr.head.sha
+            });
+
+            const content = Buffer.from(response.data.content, "base64").toString("utf8");
+            const fs = require("node:fs");
+            fs.writeFileSync("card-pool.pr.js", content, "utf8");
+
+      - name: Check alphabetical order
+        if: steps.fetch.outputs.changed == 'true'
+        run: node scripts/check-card-pool-order.mjs card-pool.pr.js
+
+      - name: Reject unsorted PR
+        if: failure() && steps.fetch.outputs.changed == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const body = [
+              "card-pool.js is not in alphabetical order.",
+              "",
+              "Please sort the entries alphabetically and resubmit.",
+              "If the order is correct, the PR can stay open for human review."
+            ].join("\n");
+
+            await github.rest.pulls.createReview({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr.number,
+              body,
+              event: "REQUEST_CHANGES"
+            });
+
+            await github.rest.pulls.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr.number,
+              state: "closed"
+            });
+
+            core.setFailed("Closed PR because card-pool.js is not alphabetized.");
