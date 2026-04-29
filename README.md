@@ -47,4 +47,6 @@ Human review is required before defaults are accepted.
 
 ## GitHub Pages
 
-This repo publishes with GitHub Pages from the `main` branch.
+This repo publishes with GitHub Pages from the `main` branch,  and available at: https://r2pitou.github.io/chatgpt-bingo/
+
+Clarinet Monkeying around with the head and the reed by ATP2 streamed from [freesound.org](https://freesound.org/people/ATP2-kh/sounds/844242/)
