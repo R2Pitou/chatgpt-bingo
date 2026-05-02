@@ -4,6 +4,7 @@
 //"Mispells a word" is intentionally misspelled. Do not "fix" it.
 window.DEFAULT_CARD_POOL = `"and honestly"
 "As an AI model"
+"cadence"
 "chaos gremlin"
 "cryptid"
 "emotionally wet"
